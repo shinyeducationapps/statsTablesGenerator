@@ -1,0 +1,124 @@
+---
+output: pdf_document
+geometry: "top = 0.75in, left = 0.75in, right = 0.75in, bottom = 0.1in"
+header-includes: 
+  - \usepackage{booktabs}
+  - \usepackage{nopageno}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, cache = FALSE, comment = "", warning = FALSE, message = FALSE,
+  fig.height = 1.4, fig.width = 2.2, fig.align = "center"
+)
+```
+
+
+\large Table: Critical values of $\chi^2$
+\vspace{0.2in}
+
+
+```{r message = FALSE}
+library(ggplot2); theme_set(theme_classic())
+
+shaded_cutoff <- qchisq(p = 0.12, df = 5, lower.tail = FALSE)
+x_right <- seq(shaded_cutoff, 15, by = 0.001)
+shaded_right <- data.frame(x = x_right, y = dchisq(x_right, df = 5))
+
+ggplot(data.frame(x = c(0, 15))) +
+  geom_area(data = shaded_right, aes(x = x, y = y), fill = "darkgray") +
+  stat_function(fun = dchisq, args = list(df = 5), lwd = 0.7) +
+  geom_hline(yintercept = 0, lwd = 0.4) +
+  geom_segment(x = shaded_cutoff, y = 0, xend = shaded_cutoff, 
+    yend = dchisq(shaded_cutoff, df = 5), lwd = 0.4
+  ) +
+  geom_segment(
+    x = 11.95, y = 1.2*dchisq(shaded_cutoff, df = 5), 
+    xend = shaded_cutoff + 0.8, yend = dchisq(shaded_cutoff, df = 5)/3.5, 
+    arrow = arrow(length = unit(0.1, "cm"), type = "closed"),
+    size = 0.3
+  ) +
+  annotate(geom = "text",
+    x = 12.5, y = 1.5*dchisq(shaded_cutoff, df = 5),
+    label = "alpha",
+    parse = TRUE, size = 3
+  ) +
+  scale_x_continuous(limits = c(0, 15), breaks = c(0, shaded_cutoff), 
+    labels = c(0, expression(chi[alpha]^2))
+  ) +
+  labs(x = "", y = "") +
+  theme(
+    axis.text.y = element_blank(), axis.ticks = element_blank(),
+    axis.line = element_blank(), axis.title.x = element_text(size = 12),
+    axis.text.x = element_text(size = 12, color = "black", margin = margin(t = -2)),
+    text = element_text(family = "serif")
+  )
+```
+
+
+\vspace{0.1in}
+
+
+```{r results = "asis", message = FALSE}
+library(xtable)
+library(magrittr)
+
+### critical chi-square values
+alpha <- c(0.995, 0.99, 0.975, 0.95, 0.9, 0.1, 0.05, 0.025, 0.01, 0.005)
+df <- c(1:30, 40, 50, 60, 70, 80, 90, 100)
+
+# lower tail = FALSE below
+alpha_df_pairs <- expand.grid(crit_df = df, crit_alpha = alpha)
+
+crit_values <- Map(qchisq,
+  p = alpha_df_pairs$crit_alpha,
+  df = alpha_df_pairs$crit_df,
+  lower.tail = FALSE
+)
+
+table_values <- crit_values %>%
+  unlist() %>%
+  round(input$round_digits) %>%
+  matrix(nrow = length(df), byrow = FALSE)
+
+
+table_values_new <- cbind.data.frame(df, table_values)
+col_names <- c("$df$", "$\\chi^2_{0.995}$", "$\\chi^2_{0.99}$", 
+  "$\\chi^2_{0.975}$", "$\\chi^2_{0.95}$", "$\\chi^2_{0.90}$", 
+  "$\\chi^2_{0.10}$", "$\\chi^2_{0.05}$", "$\\chi^2_{0.025}$", 
+  "$\\chi^2_{0.01}$", "$\\chi^2_{0.005}$"
+)
+colnames(table_values_new) <- paste0("\\multicolumn{1}{c}{", col_names, "}")
+
+
+if (input$drop_lead_zeros) {
+  table_values_new[, -1] <- apply(table_values_new[, -1], 2,
+    function(.) gsub("^0.", ".", sprintf(paste0("%.", input$round_digits, "f"), .))
+  )
+  
+  colnames(table_values_new) <- gsub("\\{0.", "\\{.", colnames(table_values_new))
+}
+
+
+addtorow <- list(
+  pos = as.list(seq(4, 29, by = 5)), 
+  command = rep("\\vspace{0.08in}", 6)
+)
+
+
+print(
+  xtable::xtable(table_values_new,
+    digits = c(0, 0, rep(input$round_digits, 10)),
+    align = c("c|", "c|", rep("r", 10)),
+    type = "latex"
+  ),
+  include.rownames = FALSE,
+  sanitize.text.function = function(x) x,
+  add.to.row = addtorow,
+  comment = FALSE,
+  booktabs = TRUE
+)
+```
+
+
+

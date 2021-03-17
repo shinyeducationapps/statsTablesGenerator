@@ -1,0 +1,124 @@
+---
+output: pdf_document
+geometry: margin = 0.75in
+header-includes: 
+  - \usepackage{booktabs}
+  - \usepackage{nopageno}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, cache = FALSE, comment = "", warning = FALSE, message = FALSE,
+  fig.height = 1.4, fig.width = 2.2, fig.align = "center"
+)
+```
+
+
+\large Table: Critical values of $t$
+\vspace{0.2in}
+
+
+```{r}
+library(ggplot2); theme_set(theme_classic())
+library(xtable)
+library(magrittr)
+
+
+x_middle <- seq(-2, 2, by = 0.001)
+shaded_middle <- data.frame(x = x_middle, y = dt(x_middle, df = 4))
+
+ggplot(data.frame(x = c(-4, 4))) +
+  geom_area(data = shaded_middle, aes(x = x, y = y), fill = "darkgray") +
+  stat_function(fun = dt, args = list(df = 4), lwd = 0.7) +
+  geom_hline(yintercept = 0, lwd = 0.4) +
+  geom_segment(x = 0, y = 0, xend = 0, yend = dt(0, df = 4)/10, lwd = 0.4) +
+  geom_segment(x = 2, y = 0, xend = 2, yend = dt(2, df = 4), lwd = 0.4) +
+  geom_segment(x = -2, y = 0, xend = -2, yend = dt(-2, df = 4), lwd = 0.4) +
+  geom_segment(
+    x = 2.4, y = dnorm(0)/1.8,
+    xend = 0.4, yend = dnorm(0)/2.7,
+    arrow = arrow(length = unit(0.1, "cm"), type = "closed"),
+    size = 0.3
+  ) +
+  annotate(geom = "text",
+    x = 2.4, y = dnorm(0)/1.3,
+    label = "Confidence\nLevel (%)",
+    size = 3
+  ) +
+  scale_x_continuous(limits = c(-4, 4), breaks = c(-2, 0, 2), 
+    labels = c(expression(italic(-t)), 0, expression(italic(t)))
+  ) +
+  labs(x = "", y = "") +
+  theme(
+    axis.text.y = element_blank(), axis.ticks = element_blank(),
+    axis.line = element_blank(), axis.title.x = element_text(size = 12),
+    axis.text.x = element_text(size = 12, color = "black", 
+      margin = margin(t = -2)
+    )
+  )
+```
+
+
+\vspace{0.1in}
+
+
+```{r results = "asis"}
+
+### critical t values
+cl <- c(0.8, 0.9, 0.95, 0.99, 0.999)
+df <- c(1:30, 40, 50, 60, 80, 100, 1e3, 1e6)
+
+# lower tail = FALSE below
+alpha_df_pairs <- expand.grid(crit_df = df, crit_alpha = (1 - cl)/2)
+
+crit_values <- Map(qt, 
+  p = alpha_df_pairs$crit_alpha, 
+  df = alpha_df_pairs$crit_df, 
+  lower.tail = FALSE
+)
+
+table_values <- crit_values %>% 
+  unlist() %>%
+  round(input$round_digits) %>%
+  matrix(nrow = length(df), byrow = FALSE)
+
+table_values_new <- cbind.data.frame(df, table_values)
+table_values_new[nrow(table_values_new), 1] <- "infty"
+col_names <- c("$df$", paste0(cl*100, "\\%"))
+col_names_new <- c(paste0("\\multicolumn{1}{c|}{", col_names[1], "}"),
+  paste0("\\multicolumn{1}{c}{", col_names[2:length(col_names)], "}")
+)
+
+
+format_text <- function(x) {
+  x <- gsub("infty", "$\\\\infty$", x)
+  x
+}
+
+addtorow <- list(
+  pos = as.list(c(0, 0, seq(4, 29, by = 5))),  # 2 header rows -> need 2 0's
+  command = c(
+    "& \\multicolumn{5}{c}{Confidence Level} \\\\", 
+    paste(c(paste(col_names_new, collapse = " & "), "\\\\"), collapse = " "), 
+    rep("\\vspace{0.08in}", 6)
+  )
+)
+
+
+print(
+  xtable::xtable(table_values_new, 
+    digits = c(0, 0, rep(input$round_digits, 5)),
+    align = c("c|", "c|", rep("r", 5)),
+    type = "latex"
+  ), 
+  include.rownames = FALSE,
+  include.colnames = FALSE,
+  sanitize.text.function = format_text,
+  add.to.row = addtorow,
+  comment = FALSE,
+  booktabs = TRUE
+)
+```
+
+
+

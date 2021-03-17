@@ -1,0 +1,241 @@
+---
+output: pdf_document
+geometry: "top = 0.75in, left = 0.4in, right = 0.4in, bottom = 0.1in"
+header-includes: 
+  - \usepackage{booktabs}
+  - \usepackage{nopageno}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, cache = FALSE, comment = "", warning = FALSE, message = FALSE,
+  fig.height = 1.3, fig.width = 2.1, fig.align = "center"
+)
+```
+
+
+\large Table: Critical values of $F, \, \alpha = 0.001$
+\vspace{0.2in}
+
+
+```{r}
+shaded_cutoff <- qf(p = 0.15, df1 = 5, df2 = 10, lower.tail = FALSE)
+x_right <- seq(shaded_cutoff, 6, by = 0.001)
+shaded_right <- data.frame(x = x_right, y = df(x_right, df1 = 4, df2 = 4))
+
+ggplot(data.frame(x = c(0, 6))) +
+  geom_area(data = shaded_right, aes(x = x, y = y), fill = "darkgray") +
+  stat_function(fun = df, args = list(df1 = 5, df2 = 10), lwd = 0.7) +
+  geom_hline(yintercept = 0, lwd = 0.4) +
+  geom_segment(x = shaded_cutoff, y = 0, xend = shaded_cutoff, 
+    yend = df(shaded_cutoff, df1 = 5, df2 = 10), lwd = 0.4
+  ) +
+  geom_segment(
+    x = 2.85, y = 1.15*df(shaded_cutoff, df1 = 5, df2 = 10), 
+    xend = shaded_cutoff + 0.2, yend = df(shaded_cutoff, df1 = 5, df2 = 10)/4, 
+    arrow = arrow(length = unit(0.1, "cm"), type = "closed"),
+    size = 0.3
+  ) +
+  annotate(geom = "text",
+    x = 3, y = 1.5*df(shaded_cutoff, df1 = 5, df2 = 10),
+    label = "alpha",
+    parse = TRUE, size = 3
+  ) +
+  scale_x_continuous(limits = c(0, 6), breaks = c(0, shaded_cutoff), 
+    labels = c(0, expression(italic("F")[alpha]))
+  ) +
+  labs(x = "", y = "") +
+  theme(
+    axis.text.y = element_blank(), axis.ticks = element_blank(),
+    axis.line = element_blank(), axis.title.x = element_text(size = 12),
+    axis.text.x = element_text(size = 12, color = "black", margin = margin(t = -2)),
+    text = element_text(family = "serif")
+  )
+```
+
+
+\vspace{0.1in}
+
+\begin{center}
+$\nu_1 =$ numerator degrees of freedom \; and \; $\nu_2 =$ denominator degrees 
+of freedom
+\end{center}
+
+\vspace{-0.1in}
+
+
+```{r results = "asis"}
+### critical chi-square values
+df_denom <- c(1:30, 40, 50, 60, 70, 80, 90, 100, 120, 1e6)
+df_num <- 1:10
+
+df1_df2_pairs <- expand.grid(df_denom = df_denom, df_num = df_num)
+
+crit_values <- Map(qf,
+  p = 0.001,
+  df1 = df1_df2_pairs$df_num,
+  df2 = df1_df2_pairs$df_denom,
+  lower.tail = FALSE
+)
+table_values <- crit_values %>%
+  unlist() %>%
+  round(input$round_digits) %>%
+  matrix(nrow = length(df_denom), byrow = FALSE)
+
+
+table_values_new <- cbind.data.frame(df_denom, table_values)
+table_values_new[nrow(table_values_new), 1] <- "infty"
+df_num_centered <- paste0("\\multicolumn{1}{c}{", df_num, "}")
+colnames(table_values_new) <- c("v2v1", df_num_centered)
+
+
+format_col_names <- function(x) {
+  x <- gsub("v2v1", "$\\\\nu_2 \\\\, \\\\backslash \\\\, \\\\nu_1$", x)
+  x
+}
+
+format_text <- function(x) {
+  x <- gsub("infty", "$\\\\infty$", x)
+  x
+}
+
+
+addtorow <- list(
+  pos = as.list(seq(4, 34, by = 5)), 
+  command = rep("\\vspace{0.08in}", 7)
+)
+
+
+print(
+  xtable::xtable(table_values_new,
+    digits = c(0, 0, rep(input$round_digits, length(df_num_centered))),
+    align = c("c|", "c|", rep("r", length(df_num_centered))),
+    type = "latex"
+  ),
+  include.rownames = FALSE,
+  size = "\\fontsize{9}{11}\\selectfont",
+  sanitize.colnames.function = format_col_names,
+  sanitize.text.function = format_text,
+  add.to.row = addtorow,
+  comment = FALSE,
+  booktabs = TRUE
+)
+```
+
+
+\newpage
+
+\large Table: Critical values of $F, \, \alpha = 0.001$ (continued)
+\vspace{0.2in}
+
+
+```{r}
+shaded_cutoff <- qf(p = 0.15, df1 = 5, df2 = 10, lower.tail = FALSE)
+x_right <- seq(shaded_cutoff, 6, by = 0.001)
+shaded_right <- data.frame(x = x_right, y = df(x_right, df1 = 4, df2 = 4))
+
+ggplot(data.frame(x = c(0, 6))) +
+  geom_area(data = shaded_right, aes(x = x, y = y), fill = "darkgray") +
+  stat_function(fun = df, args = list(df1 = 5, df2 = 10), lwd = 0.7) +
+  geom_hline(yintercept = 0, lwd = 0.4) +
+  geom_segment(x = shaded_cutoff, y = 0, xend = shaded_cutoff, 
+    yend = df(shaded_cutoff, df1 = 5, df2 = 10), lwd = 0.4
+  ) +
+  geom_segment(
+    x = 2.85, y = 1.15*df(shaded_cutoff, df1 = 5, df2 = 10), 
+    xend = shaded_cutoff + 0.2, yend = df(shaded_cutoff, df1 = 5, df2 = 10)/4, 
+    arrow = arrow(length = unit(0.1, "cm"), type = "closed"),
+    size = 0.3
+  ) +
+  annotate(geom = "text",
+    x = 3, y = 1.5*df(shaded_cutoff, df1 = 5, df2 = 10),
+    label = "alpha",
+    parse = TRUE, size = 3
+  ) +
+  scale_x_continuous(limits = c(0, 6), breaks = c(0, shaded_cutoff), 
+    labels = c(0, expression(italic("F")[alpha]))
+  ) +
+  labs(x = "", y = "") +
+  theme(
+    axis.text.y = element_blank(), axis.ticks = element_blank(),
+    axis.line = element_blank(), axis.title.x = element_text(size = 12),
+    axis.text.x = element_text(size = 12, color = "black", margin = margin(t = -2)),
+    text = element_text(family = "serif")
+  )
+```
+
+
+\vspace{0.1in}
+
+\begin{center}
+$\nu_1 =$ numerator degrees of freedom \; and \; $\nu_2 =$ denominator degrees 
+of freedom
+\end{center}
+
+\vspace{-0.1in}
+
+
+```{r results = "asis"}
+### critical chi-square values
+df_denom <- c(1:30, 40, 50, 60, 70, 80, 90, 100, 120, 1e6)
+df_num <- c(12, 15, 20, 24, 30, 40, 60, 120, 1e6)
+
+df1_df2_pairs <- expand.grid(df_denom = df_denom, df_num = df_num)
+
+crit_values <- Map(qf,
+  p = 0.001,
+  df1 = df1_df2_pairs$df_num,
+  df2 = df1_df2_pairs$df_denom,
+  lower.tail = FALSE
+)
+
+table_values <- crit_values %>%
+  unlist() %>%
+  round(input$round_digits) %>%
+  matrix(nrow = length(df_denom), byrow = FALSE)
+
+
+table_values_new <- cbind.data.frame(df_denom, table_values)
+table_values_new[nrow(table_values_new), 1] <- "infty"
+
+df_num_centered <- paste0("\\multicolumn{1}{c}{", df_num, "}")
+colnames(table_values_new) <- c("v2v1", df_num_centered)
+colnames(table_values_new)[ncol(table_values_new)] <- "\\multicolumn{1}{c}{infty}"
+
+
+format_col_names <- function(x) {
+  x <- gsub("v2v1", "$\\\\nu_2 \\\\, \\\\backslash \\\\, \\\\nu_1$", x)
+  x <- gsub("infty", "$\\\\infty$", x)
+  x
+}
+
+format_text <- function(x) {
+  x <- gsub("infty", "$\\\\infty$", x)
+  x
+}
+
+
+addtorow <- list(
+  pos = as.list(seq(4, 34, by = 5)), 
+  command = rep("\\vspace{0.08in}", 7)
+)
+
+
+print(
+  xtable::xtable(table_values_new,
+    digits = c(0, 0, rep(input$round_digits, length(df_num_centered))),
+    align = c("c|", "c|", rep("r", length(df_num_centered))),
+    type = "latex"
+  ),
+  include.rownames = FALSE,
+  size = "\\fontsize{9}{11}\\selectfont",
+  sanitize.colnames.function = format_col_names,
+  sanitize.text.function = format_text,
+  add.to.row = addtorow,
+  comment = FALSE,
+  booktabs = TRUE
+)
+```
+
+
+

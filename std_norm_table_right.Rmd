@@ -1,0 +1,315 @@
+---
+output: pdf_document
+geometry: "top = 0.75in, left = 0.75in, right = 0.75in, bottom = 0.05in"
+header-includes: 
+  - \usepackage{booktabs}
+  - \usepackage{nopageno}
+  - \usepackage{caption}
+  - \captionsetup{labelformat = empty, justification = justified}
+  - \usepackage{floatrow}
+  - \floatsetup{heightadjust = object}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, cache = FALSE, comment = "", warning = FALSE, message = FALSE,
+  fig.height = 1.4, fig.width = 2.2, fig.align = "center"
+)
+```
+
+
+\large Table: Standard normal probabilities
+\vspace{0.2in}
+
+
+```{r}
+library(ggplot2); theme_set(theme_classic())
+library(xtable)
+
+
+x_right <- seq(-1.5, 3.2, by = 0.001)
+shaded_right <- data.frame(x = x_right, y = dnorm(x_right))
+
+ggplot(data.frame(x = c(-3.2, 3.2))) +
+  geom_area(data = shaded_right, aes(x = x, y = y), fill = "darkgray") +
+  stat_function(fun = dnorm, lwd = 0.7) +
+  geom_hline(yintercept = 0, lwd = 0.4) +
+  geom_segment(x = 0, y = 0, xend = 0, yend = dnorm(0)/10, lwd = 0.4) +
+  geom_segment(x = -1.5, y = 0, xend = -1.5, yend = dnorm(-1.5), lwd = 0.4) +
+  geom_segment(
+    x = 2.3, y = dnorm(0)/1.4, 
+    xend = 0.4, yend = dnorm(0)/2.6, 
+    arrow = arrow(length = unit(0.1, "cm"), type = "closed"),
+    size = 0.3
+  ) +
+  annotate(geom = "text", 
+    x = 2.3, y = dnorm(0)/1.2,
+    label = "Probability",
+    size = 3
+  ) +
+  scale_x_continuous(limits = c(-3.2, 3.2), breaks = c(-1.5, 0), 
+    labels = c("z", 0)
+  ) +
+  labs(x = "", y = "") +
+  theme(
+    axis.text.y = element_blank(), axis.ticks = element_blank(),
+    axis.line = element_blank(), axis.title.x = element_text(size = 12),
+    axis.text.x = element_text(size = 12, color = "black", 
+      margin = margin(t = -2)
+    ),
+    text = element_text(family = "serif")
+  )
+```
+
+
+\vspace{0.1in}
+
+
+```{r results = "asis"}
+
+# negative z-scores
+z_neg <- seq(-3.49, 0, by = 0.01)
+cum_probs <- round(pnorm(z_neg, lower.tail = FALSE), input$round_digits)
+table_probs <- matrix(cum_probs, nrow = length(seq(-3.4, 0, 0.1)), byrow = TRUE)
+
+# important to rotate!!
+rotate <- function(x) t(apply(x, 1, rev))
+table_probs_new <- rotate(table_probs)
+
+first_col <- formatC(signif(seq(-3.4, 0, 0.1), 2), format = "f", digits = 1)
+first_col[length(first_col)] <- "-0.0"
+table_probs_new <- cbind.data.frame(first_col, table_probs_new)
+
+col_names <- formatC(signif(seq(0, 0.09, 0.01), 2), format = "f", digits = 2)
+col_names_centered <- paste0("\\multicolumn{1}{c}{", col_names, "}")
+
+colnames(table_probs_new) <- c("z", col_names_centered)
+
+
+if (input$drop_lead_zeros) {
+  table_probs_new <- apply(table_probs_new, 2,
+    function(.) gsub("^(-?)0.", "\\1.", .)
+  )
+
+  colnames(table_probs_new) <- gsub("\\{0.", "\\{.", colnames(table_probs_new))
+}
+
+
+format_text <- function(x) {
+  x <- gsub("-", "$-$", x)
+  x <- gsub("z", "$z$", x)
+  x
+}
+
+
+addtorow <- list(
+  pos = as.list(seq(4, 29, by = 5)), 
+  command = rep("\\vspace{0.08in}", 6)
+)
+
+
+print(
+  xtable::xtable(table_probs_new, 
+    digits = c(2, 2, rep(input$round_digits, 10)),
+    align = c("c|", "c|", rep("r", 10)),
+    type = "latex"
+  ),
+  sanitize.text.function = format_text,
+  include.rownames = FALSE,
+  add.to.row = addtorow,
+  comment = FALSE,
+  booktabs = TRUE
+)
+```
+
+
+\newpage
+
+\large Table: Standard normal probabilities (continued)
+\vspace{0.2in}
+
+
+```{r results = "asis"}
+
+x_right2 <- seq(1.5, 3.2, by = 0.001)
+shaded_right2 <- data.frame(x = x_right2, y = dnorm(x_right2))
+
+ggplot(data.frame(x = c(-3.2, 3.2))) +
+  geom_area(data = shaded_right2, aes(x = x, y = y), fill = "darkgray") +
+  stat_function(fun = dnorm, lwd = 0.7) +
+  geom_hline(yintercept = 0, lwd = 0.4) +
+  geom_segment(x = 0, y = 0, xend = 0, yend = dnorm(0)/10, lwd = 0.4) +
+  geom_segment(x = 1.5, y = 0, xend = 1.5, yend = dnorm(1.5), lwd = 0.4) +
+  geom_segment(
+    x = 2.3, y = dnorm(0)/1.65, 
+    xend = 1.75, yend = dnorm(0)/18, 
+    arrow = arrow(length = unit(0.1, "cm"), type = "closed"),
+    size = 0.3
+  ) +
+  annotate(geom = "text", 
+    x = 2.3, y = dnorm(0)/1.4,
+    label = "Probability",
+    size = 3
+  ) +
+  scale_x_continuous(limits = c(-3.2, 3.2), breaks = c(0, 1.5), 
+    labels = c(0, "z")
+  ) +
+  labs(x = "", y = "") +
+  theme(
+    axis.text.y = element_blank(), axis.ticks = element_blank(),
+    axis.line = element_blank(), axis.title.x = element_text(size = 12),
+    axis.text.x = element_text(size = 12, color = "black", 
+      margin = margin(t = -2)
+    ),
+    text = element_text(family = "serif")
+  )
+```
+
+
+\vspace{0.1in}
+
+
+```{r results = "asis"}
+
+# positive z-scores
+z_pos <- seq(0, 3.49, by = 0.01)
+cum_probs2 <- round(pnorm(z_pos, lower.tail = FALSE), input$round_digits)
+table_probs2 <- matrix(cum_probs2, nrow = length(seq(0, 3.4, 0.1)), byrow = TRUE)
+
+first_col2 <- formatC(signif(seq(0, 3.4, 0.1), 2), format = "f", digits = 1)
+table_probs_new2 <- cbind.data.frame(first_col2, table_probs2)
+
+col_names <- formatC(signif(seq(0, 0.09, 0.01), 2), format = "f", digits = 2)
+col_names_centered <- paste0("\\multicolumn{1}{c}{", col_names, "}")
+
+colnames(table_probs_new2) <- c("z", col_names_centered)
+
+
+if (input$drop_lead_zeros) {
+  table_probs_new2 <- apply(table_probs_new2, 2, 
+    function(.) gsub("^(-?)0.", "\\1.", .)
+  )
+  
+  colnames(table_probs_new2) <- gsub("\\{0.", "\\{.", colnames(table_probs_new2))
+}
+
+
+format_text <- function(x) {
+  x <- gsub("z", "$z$", x)
+  x
+}
+
+
+addtorow <- list(
+  pos = as.list(seq(4, 29, by = 5)), 
+  command = rep("\\vspace{0.08in}", 6)
+)
+
+
+print(
+  xtable::xtable(table_probs_new2, 
+    digits = c(2, 2, rep(input$round_digits, 10)),
+    align = c("c|", "c|", rep("r", 10)),
+    type = "latex"
+  ),
+  sanitize.text.function = format_text,
+  include.rownames = FALSE,
+  add.to.row = addtorow,
+  comment = FALSE,
+  booktabs = TRUE
+)
+```
+
+
+
+
+```{r include = FALSE}
+if (input$include_crit_z_table == TRUE) {
+
+  conf_level <- c(0.8, 0.9, 0.95, 0.99)
+  crit_z <- qnorm(conf_level + (1 - conf_level)/2)
+  crit_z[c(2, 4)] <- round(crit_z[c(2, 4)], 3)
+  crit_z[c(1, 3)] <- formatC(crit_z[c(1, 3)], format = "f", digits = 2)
+  
+  conf_level_table <- paste0(conf_level*100, "%")
+  
+  crit_z_table <- cbind.data.frame(conf_level_table, crit_z)
+  names(crit_z_table) <- c("Confidence Level", "Critical Z")
+  
+  
+  crit_table <- xtable(crit_z_table, 
+    align = c("c", "c", "l"),
+    type = "latex"
+  )
+  
+  
+  x_middle <- seq(-1.645, 1.645, by = 0.001)
+  shaded_middle <- data.frame(x = x_middle, y = dnorm(x_middle))
+
+  crit_plot <- ggplot(data.frame(x = c(-3.2, 3.2))) +
+    geom_area(data = shaded_middle, aes(x = x, y = y), fill = "darkgray") +
+    stat_function(fun = dnorm, lwd = 0.7) +
+    geom_hline(yintercept = 0, lwd = 0.4) +
+    geom_segment(x = 0, y = 0, xend = 0, yend = dnorm(0)/10, lwd = 0.4) +
+    geom_segment(x = -1.645, y = 0, xend = -1.645, yend = dnorm(-1.645), lwd = 0.4) +
+    geom_segment(x = 1.645, y = 0, xend = 1.645, yend = dnorm(1.645), lwd = 0.4) +
+    geom_segment(
+      x = -2.3, y = dnorm(0)/1.6,
+      xend = -0.4, yend = dnorm(0)/2.6,
+      arrow = arrow(length = unit(0.1, "cm"), type = "closed"),
+      size = 0.3
+    ) +
+    annotate(geom = "text",
+      x = -2.3, y = dnorm(0)/1.2,
+      label = "Confidence\nLevel (%)",
+      size = 3
+    ) +
+    scale_x_continuous(limits = c(-3.2, 3.2), breaks = c(-1.645, 0, 1.645),
+      labels = c("-z", 0, "z")
+    ) +
+    labs(x = "", y = "") +
+    theme(
+      axis.text.y = element_blank(), axis.ticks = element_blank(),
+      axis.line = element_blank(), axis.title.x = element_text(size = 12),
+      axis.text.x = element_text(size = 12, color = "black", 
+        margin = margin(t = -2)
+      ),
+      text = element_text(family = "serif"), 
+      plot.margin = grid::unit(c(0,0,0,0), "mm")
+    )
+}
+```
+
+
+\vspace{0.1in}
+
+\newfloatcommand{btabbox}{table}
+
+\begin{figure}[H]
+\begin{floatrow}
+
+\btabbox[\FBwidth][\FBheight][t]{%
+```{r results = "asis", fig.height = 1.37}
+if (input$include_crit_z_table == TRUE) {
+  print(crit_table, 
+    include.rownames = FALSE,
+    comment = FALSE,
+    booktabs = TRUE,
+    floating = FALSE
+  )
+}
+```
+}
+
+
+\ffigbox[2.3in]{%
+```{r fig.height = 1.4}
+if (input$include_crit_z_table == TRUE) crit_plot
+```
+}
+
+\end{floatrow}
+\end{figure}
+
+
+

@@ -1,0 +1,167 @@
+---
+output: pdf_document
+geometry: "top = 0.75in, left = 0.5in, right = 0.5in, bottom = 0.1in"
+header-includes: 
+  - \usepackage{booktabs}
+  - \usepackage{nopageno}
+  - \usepackage{caption}
+  - \captionsetup{labelformat = empty, justification = justified}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, cache = FALSE, comment = "", warning = FALSE, message = FALSE,
+  fig.height = 1.8, fig.width = 2.5, fig.align = "center"
+)
+```
+
+
+\large Table: Poisson probability mass function (PMF) probabilities
+\vspace{0.2in}
+
+
+```{r message = FALSE}
+suppressWarnings(library(ggplot2)); theme_set(theme_classic())
+
+x <- 0:10
+lam <- 2
+y <- dpois(x, lam)
+fillcol <- c(rep("no", 2), "yes", rep("no", 8))
+
+df <- data.frame(x = x, y = y, fillcol = fillcol)
+
+ggplot(df, aes(x = x, y = y, fill = fillcol)) + 
+  geom_bar(stat = "identity", color = "black") +
+  scale_x_continuous(breaks = seq(0, 10, 1)) +
+  scale_y_continuous("P(X = x)", limits = c(NA, 0.35), breaks = seq(0, 0.3, 0.1)) +
+  scale_fill_manual(values = c("yes" = "black", "no" = "white"), guide = FALSE) +
+  geom_segment(
+    x = 5.2, y = 0.22, 
+    xend = 2.8, yend = 0.265, 
+    arrow = arrow(length = unit(0.1, "cm"), type = "closed"),
+    size = 0.3
+  ) +
+  annotate(geom = "text",
+    x = 7.8, y = 0.22,
+    label = "P(X = 2) for",
+    size = 4, family = "serif"
+  ) +
+  annotate(geom = "text",
+    x = 7.8, y = 0.17,
+    label = "paste(lambda, \" = 2\")",
+    parse = TRUE, size = 4, family = "serif"
+  ) +
+  theme(
+    axis.text = element_text(size = 9, color = "black"),
+    text = element_text(family = "serif"),
+    title = element_text(family = "serif"),
+    axis.title.x = element_text(margin = margin(t = 2)),
+    axis.title.y = element_text(margin = margin(r = 2))
+  )
+```
+
+
+\vspace{0.1in}
+
+
+```{r results = "asis", message = FALSE}
+suppressWarnings(library(xtable))
+suppressWarnings(library(magrittr))
+
+make_pois_table <- function(x_max, lambda) {
+
+  x <- 0:x_max
+  
+  x_lambda_pairs <- expand.grid(x = x, lambda = lambda)
+  
+  probs <- Map(dpois, 
+    x = x_lambda_pairs$x,
+    lambda = x_lambda_pairs$lambda
+  )
+  table_probs <- probs %>% 
+    unlist() %>%
+    round(input$round_digits) %>%
+    matrix(nrow = length(x), byrow = FALSE)
+  
+  table_probs_new <- cbind.data.frame(x, table_probs)
+
+  col_names <- formatC(signif(lambda, 2), format = "f", digits = 1)
+  col_names_centered <- paste0("\\multicolumn{1}{c}{", col_names, "}")
+  
+  colnames(table_probs_new) <- c("xlam", col_names_centered)
+  
+  
+  if (input$drop_lead_zeros) {
+    table_probs_new[, -1] <- apply(table_probs_new[, -1], 2, 
+      function(.) gsub("^0.", ".", sprintf(paste0("%.", input$round_digits, "f"), .))
+    )
+    
+    colnames(table_probs_new) <- gsub("\\{0.", "\\{.", colnames(table_probs_new))
+  }
+  
+  
+  format_col_names <- function(x) {
+    x <- gsub("xlam", "$\\x \\\\, \\\\backslash \\\\, \\\\lambda$", x)
+    x
+  }
+  
+  
+  print(
+    xtable::xtable(table_probs_new, 
+      digits = c(0, 0, rep(input$round_digits, length(lambda))),
+      align = c("c|", "c|", rep("r", length(lambda))),
+      type = "latex"
+    ),
+    include.rownames = FALSE,
+    sanitize.colnames.function = format_col_names,
+    comment = FALSE,
+    booktabs = TRUE,
+    table.placement = "!ht"
+  )
+}
+
+make_pois_table(10, seq(0.2, 2, 0.2))
+```
+
+
+\vspace{0.25in}
+
+
+```{r results = "asis"}
+make_pois_table(15, seq(2.2, 4, 0.2))
+```
+
+
+\newpage
+
+
+\large Table: Poisson probability mass function (PMF) probabilities (continued)
+\vspace{0.25in}
+
+
+```{r results = "asis"}
+make_pois_table(18, seq(4.2, 6, 0.2))
+```
+
+
+\vspace{0.25in}
+
+
+```{r results = "asis"}
+make_pois_table(22, seq(6.2, 8, 0.2))
+```
+
+
+\newpage
+
+
+\large Table: Poisson probability mass function (PMF) probabilities (continued)
+\vspace{0.25in}
+
+
+```{r results = "asis"}
+make_pois_table(25, seq(8.2, 10, 0.2))
+```
+
+
+
